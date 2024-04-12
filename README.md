@@ -25,7 +25,7 @@ python -m src.train --datasets cora --budgets 35  --save 1  --savename GraphCBAL
 We train ```GraphCBAL++``` using the labeled training graph of ```cora``` with query budgets of ```35```, and we want to save the trained model in ```GraphCBAL++.pkl```, then use the following commend: 
 
 ```
-python -m src.train --datasets cora --budgets 35  --use_major_class 1 --punishment 0.05  --save 1  --savename GraphCBAL  
+python -m src.train --datasets cora --budgets 35  --use_major_class 1 --punishment 0.05  --save 1  --savename GraphCBAL++  
 ```
 
 where ```use_major_class``` and ```punishment``` refer to the Majority-Score state feature and the penalty score in the punishment mechanism.
