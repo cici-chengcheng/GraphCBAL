@@ -3,10 +3,7 @@ import networkx as nx
 import pickle as pkl
 import torch
 import numpy as np
-from collections import defaultdict
 from collections import OrderedDict
-import time
-from src.utils.common import *
 from src.utils.utils import *
 
 
@@ -21,13 +18,9 @@ class GraphLoader(object):
         self.header = header
         self.sparse = sparse
         self.dirname = os.path.join(root,name)
-        if name == "reddit1401":
-            self.prefix = os.path.join(root, name, multigraphindex, multigraphindex)
-        else:
-            self.prefix = os.path.join(root, name, name)
+        self.prefix = os.path.join(root, name, name)
         self._load()
         self._registerStat()
-        self.printStat()
 
 
     def _loadConfig(self):
@@ -49,7 +42,7 @@ class GraphLoader(object):
         """
         file_name = self.prefix+".edgelist"
         if not header:  # header是指.edgelist第一行是否有写节点数量
-            logger.warning("You are reading an edgelist with no explicit number of nodes")
+            print("You are reading an edgelist with no explicit number of nodes")
         if self.undirected:
             G = nx.Graph()
         else:
@@ -82,8 +75,6 @@ class GraphLoader(object):
 
     def _getAdj(self):
         self.adj = nx.adjacency_matrix(self.G).astype(np.float32)  # 变为稀疏矩阵
-        # print(type(self.adj))  # scipy.sparse.csr.csr_matrix
-        # print(self.adj[0:5])  # 起点是0~5的所有元组 1.0
 
     def _toTensor(self,device=None):
         if device is None:
@@ -120,11 +111,7 @@ class GraphLoader(object):
     def process(self):
         if int(self.bestconfig['feature_normalize']):
             self.X = column_normalize(preprocess_features(self.X)) # take some time
-        
-        # self.X = self.X - self.X.min(axis=0)
-        # print(np.where(self.X))
-        # exit()
-        # print(self.X[:3,:].tolist())
+
         self.normadj = preprocess_adj(self.adj)  # 得到归一化的邻接矩阵
         if not self.sparse:
             self.adj = self.adj.todense()
@@ -133,9 +120,6 @@ class GraphLoader(object):
         
         self.normdeg = self._getNormDeg()
 
-
-    def printStat(self):
-        logdicts(self.stat,tablename="dataset stat")
 
     def _getNormDeg(self):
         self.deg = torch.sparse.sum(self.adj, dim=1).to_dense()  # 对邻接矩阵稀疏张量的维度1求和得到每个节点的度 (节点数,节点数) -> (节点数,)

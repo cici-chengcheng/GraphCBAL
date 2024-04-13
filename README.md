@@ -36,13 +36,13 @@ Please refer to the source code to see how to set the other arguments.
 Use ```test.py``` to test the learned active learning policy on unlabeled test graphs. For example, we have an unlabeled test graph ```Citeseer``` with a query budget of ```120```, and if we want to test the policy ```GraphCBAL.pkl```, then use the following commend: 
 
 ```
-python -m src.test  --datasets citeseet --budgets 120  --modelname GraphCBAL
+python -m src.test  --datasets citeseer --budgets 120  --modelname GraphCBAL
 ```
 
 If we want to test the policy ```GraphCBAL++.pkl```, then use the following commend:
 
 ```
-python -m src.test  --datasets citeseet --budgets 120  --use_major_class 1 --modelname GraphCBAL++
+python -m src.test  --datasets citeseer --budgets 120  --use_major_class 1 --modelname GraphCBAL++
 ```
 
 Please refer to the source code to see how to set the other arguments. 

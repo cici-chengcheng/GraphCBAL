@@ -5,7 +5,6 @@ from sklearn.metrics import f1_score, roc_auc_score, precision_recall_fscore_sup
 import torch
 import math
 
-from src.utils.common import *
 
 
 def preprocess_features(features):
@@ -23,7 +22,7 @@ def column_normalize(tens):
 
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
-    adj = sp.coo_matrix(adj)  # 转换为coo_matrix格式，该格式可以方便地存储和处理矩阵中的非零元素
+    adj = sp.coo_matrix(adj)
     rowsum = np.array(adj.sum(1))
     d_inv_sqrt = np.power(rowsum, -0.5).flatten()
     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
@@ -49,13 +48,11 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
 
 def statMetrics(y_pred, label, classnum):
     if len(label.size())==1:
-        y_pred_prob = torch.exp(y_pred).cpu().detach().numpy()  # 使用指数函数得到log_softmax取对数前的值 用于计算AUC
-        y_pred = y_pred.max(1)[1].type_as(label)  # 取每个样本的最大值索引,即类别标签
-        # print(torch.bincount(y_pred))
+        y_pred_prob = torch.exp(y_pred).cpu().detach().numpy()
+        y_pred = y_pred.max(1)[1].type_as(label)
         y_pred = y_pred.cpu().detach().numpy()
         label = label.cpu().numpy()
     elif len(label.size())==2:
-        # print("rawy_pred",y_pred)
         y_pred=(y_pred > 0.).cpu().detach().numpy()
         label=label.cpu().numpy()
 
@@ -64,10 +61,10 @@ def statMetrics(y_pred, label, classnum):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         mic, mac = f1_score(label, y_pred, average="micro"), f1_score(label, y_pred, average="macro")
-        auc = 0#roc_auc_score(label, y_pred_prob, average="macro", multi_class='ovr')
+        auc = 0 #roc_auc_score(label, y_pred_prob, average="macro", multi_class='ovr')
         f1_scores = f1_score(label, y_pred, average=None)
         f1_std = np.std(f1_scores)
-    # acc == micro-F1 == micro-Recall == micro-Precision
+
     return mic, mac, auc, f1_std, f1_scores, recalls
 
 
@@ -92,8 +89,8 @@ def entropy(tens, multilabel=False):
         entropy=torch.mean(ent,dim=1)
     else:
         assert type(tens)==torch.Tensor and len(tens.size())==3,"calculating entropy of wrong size"
-        entropy = - torch.log(torch.clamp(tens, min=1e-7)) * tens  # (batchsize,节点数,类别数)
-        entropy = torch.sum(entropy, dim=2)  # 在类别维度上求和 (batchsize,节点数)
+        entropy = - torch.log(torch.clamp(tens, min=1e-7)) * tens
+        entropy = torch.sum(entropy, dim=2)
     return entropy
 
 
@@ -110,7 +107,7 @@ class AverageMeter(object):
         self.criterion = criterion
 
     def update(self, data):
-        if data is not None:   # 每训练完一条episode 会把一个rwdfinal更新进来
+        if data is not None:
             self.history.append(data)
 
     def __call__(self):
@@ -118,18 +115,17 @@ class AverageMeter(object):
             value =  None
         else:
             cal = self.history[-self.ave_step:]
-            value = sum(cal)/float(len(cal))  # 最近的ave_step个值的均值
+            value = sum(cal)/float(len(cal))
         return value
 
     def should_save(self):
-        # 保存模型需满足：1)至少已训练了S*2条episode  2)近S个指标均值大于(小于)近S*2个指标均值
         if self.criterion == "greater":
             if len(self.history) > self.S*2 and sum(self.history[-self.S:])/float(self.S) > sum(self.history[-self.S*2:])/float(self.S*2):
                 if self.history_extrem is None :
-                    self.history_extrem = sum(self.history[-self.S:])/float(self.S)  # 初始化近S个指标均值作为最优值
+                    self.history_extrem = sum(self.history[-self.S:])/float(self.S)
                     return False
                 else:
-                    if self.history_extrem < sum(self.history[-self.S:])/float(self.S):  # macro f1更大则替换 保存模型
+                    if self.history_extrem < sum(self.history[-self.S:])/float(self.S):
                         self.history_extrem = sum(self.history[-self.S:])/float(self.S)
                         return True
                     else:
@@ -139,10 +135,10 @@ class AverageMeter(object):
         else:  # less
             if len(self.history) > self.S*2 and sum(self.history[-self.S:])/float(self.S) < sum(self.history[-self.S*2:])/float(self.S*2):
                 if self.history_extrem is None :
-                    self.history_extrem = sum(self.history[-self.S:])/float(self.S)  # 初始化近S个指标均值作为最优值
+                    self.history_extrem = sum(self.history[-self.S:])/float(self.S)
                     return False
                 else:
-                    if self.history_extrem > sum(self.history[-self.S:])/float(self.S):  # label_std更小则替换 保存模型
+                    if self.history_extrem > sum(self.history[-self.S:])/float(self.S):
                         self.history_extrem = sum(self.history[-self.S:])/float(self.S)
                         return True
                     else:
@@ -173,8 +169,8 @@ def common_rate(counts,prediction,seq):
     summation = counts.sum(dim=1, keepdim=True)
     squaresum = (counts ** 2).sum(dim=1, keepdim=True)
     ret = (summation ** 2 - squaresum) / (summation * (summation - 1)+1)
-    # print("here1")
+
     equal_rate=counts[seq,prediction].reshape(-1,1)/(summation+1)
-    # print(ret,equal_rate)
+
     return ret,equal_rate
 
